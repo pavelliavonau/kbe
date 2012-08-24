@@ -10,5 +10,11 @@
         <file>media/icons/mail.png</file>
         <file>media/icons/window-close.png</file>
         <file>media/startup/index.html</file>
+        <file>media/startup/css/ie.css</file>
+        <file>media/startup/css/style.css</file>
+        <file>media/startup/images/bg-content.gif</file>
+        <file>media/startup/images/bottom-shadow.gif</file>
+        <file>media/translations/lang_en_EN.qm</file>
+        <file>media/translations/lang_ru_RU.qm</file>
     </qresource>
 </RCC>

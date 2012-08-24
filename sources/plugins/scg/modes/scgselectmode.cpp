@@ -26,6 +26,7 @@ along with OSTIS.  If not, see <http://www.gnu.org/licenses/>.
 #include "scgtemplateobjectbuilder.h"
 #include "scgnode.h"
 #include "scgbus.h"
+#include "scgpair.h"
 #include "scgtextitem.h"
 #include "scgpointgraphicsitem.h"
 
@@ -54,22 +55,25 @@ void SCgSelectMode::mouseDoubleClick(QGraphicsSceneMouseEvent *event)
         QGraphicsItem *item = mScene->itemAt(mousePos);
         if(mCurrentPointObject)
         {
-            QPainterPath p = mCurrentPointObject->shape();
+            QPainterPath p = mCurrentPointObject->lineShape();
             QPointF itemPoint = mCurrentPointObject->mapFromScene(mousePos);
             if(p.contains(itemPoint))
-                mScene->addPointCommand(mCurrentPointObject,itemPoint);
+            {
+                mScene->addPointCommand(mCurrentPointObject, mousePos);
+                event->accept();
+                return;
+            }
+        }
+
+        // check if there are no any items under mouse and create scg-node
+        if (item == 0 || item->type() == SCgContour::Type)
+        {
+            SCgContour *contour = 0;
+            if (item != 0 && item->type() == SCgContour::Type)
+                contour = static_cast<SCgContour*>(item);
+            mScene->createNodeCommand(mousePos, contour);
             event->accept();
         }
-        else
-            // check if there are no any items under mouse and create scg-node
-            if (item == 0 || item->type() == SCgContour::Type)
-            {
-                SCgContour *contour = 0;
-                if (item != 0 && item->type() == SCgContour::Type)
-                    contour = static_cast<SCgContour*>(item);
-                mScene->createNodeCommand(mousePos, contour);
-                event->accept();
-            }
     }
     SCgMode::mouseDoubleClick(event);
 }
@@ -141,43 +145,52 @@ void SCgSelectMode::mousePress(QGraphicsSceneMouseEvent *event)
 
     // start cloning
     if (event->modifiers() == Qt::ShiftModifier && mScene->selectedItems().contains(mScene->objectAt(event->scenePos())))
+    {
         mScene->setEditMode(SCgScene::Mode_Clone);
+        event->accept();
+    }
 }
 
 void SCgSelectMode::mouseRelease(QGraphicsSceneMouseEvent *event)
 {
     if(mIsItemsMoved)
     {
-        //______________________________________________________//
         //Store finish positions (after items moving)
         SCgScene::ItemUndoInfo::iterator it = mUndoInfo.begin();
         for(; it != mUndoInfo.end(); ++it)
         {
             QGraphicsItem *item = it.key();
             SCgContour *newParent = 0;
+
             switch(item->type())
             {
-            case SCgPointGraphicsItem::Type :
-            case SCgIncidentPointGraphicsItem::Type :
+            case SCgPointGraphicsItem::Type:
+            case SCgIncidentPointGraphicsItem::Type:
             case SCgTextItem::Type:
-            {
-                // exclude PointGraphicsItem's object, because it always has a parent item
-                it.value().second.second = item->pos();
-                continue;
-            }
-            case SCgNode::Type : case SCgContour::Type :
-            {
-                newParent = findNearestParentContour(item);
+            case SCgPair::Type:
+                {
+                    // exclude PointGraphicsItem's object, because it always has a parent item
+                    it.value().second.second = item->pos();
+                    continue;
+                }
+            case SCgNode::Type :
+            case SCgContour::Type :
+                {
+                    newParent = findNearestParentContour(item);
+                    break;
+                }
+            case SCgBus::Type :
+                {
+                    SCgNode* node = qgraphicsitem_cast<SCgBus*>(item)->owner();
+                    newParent = findNearestParentContour(node);
+                }
+            default :
                 break;
             }
-            case SCgBus::Type : {
-                SCgNode* node = qgraphicsitem_cast<SCgBus*>(item)->owner();
-                newParent = findNearestParentContour(node);
-            }
-            default : break;
-            }
+
             QGraphicsItem *oldParent = item->parentItem();
-            if (newParent) {// mapped item coordinates to new parent item
+            if (newParent) // map item coordinates to new parent item
+            {
                 if (oldParent)
                     it.value().second.second = oldParent->mapToItem(newParent, item->pos());
                 else
@@ -199,7 +212,7 @@ void SCgSelectMode::mouseRelease(QGraphicsSceneMouseEvent *event)
                     it.value().second.second = item->pos();
             }
         }
-        //______________________________________________________//
+
         mScene->moveSelectedCommand(mUndoInfo);
         mIsItemsMoved = false;
         mUndoInfo.clear();

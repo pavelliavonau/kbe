@@ -48,8 +48,8 @@ public:
     /*! @defgroup scaleConstraints Scale Constraints
      *  @{
      */
-    static const qreal minScale = 0.20;
-    static const qreal maxScale = 9.99;
+    static const qreal minScale;
+    static const qreal maxScale;
     /*! @}*/
 
     /*! Constructor

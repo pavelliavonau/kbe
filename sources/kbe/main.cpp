@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
     //splash.showMessage("Load Translation", Qt::AlignBottom | Qt::AlignHCenter);
 
     QTranslator myappTranslator;
-    myappTranslator.load(":/media/translations/lang_" + QLocale::system().name());
+    myappTranslator.load(":/media/translations/lang_" + QLocale::system().name() + ".qm");
     a.installTranslator(&myappTranslator);
 
     //splash.showMessage(a.tr("Create interface"), Qt::AlignBottom | Qt::AlignHCenter);
@@ -83,11 +83,11 @@ int main(int argc, char *argv[])
         settings.setValue(SETTINGS_STARTUP_DIALOG_SHOW, QVariant(true));
 
     // show startup dialog
-    if (settings.value(SETTINGS_STARTUP_DIALOG_SHOW).toBool())
-    {
-        GuideDialog startDialog(MainWindow::getInstance());
-        startDialog.exec();
-    }
+//    if (settings.value(SETTINGS_STARTUP_DIALOG_SHOW).toBool())
+//    {
+//        GuideDialog startDialog(MainWindow::getInstance());
+//        startDialog.exec();
+//    }
 
     //splash.finish(&w);
     return a.exec();

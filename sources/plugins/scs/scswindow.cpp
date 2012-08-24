@@ -53,6 +53,8 @@ SCsWindow::SCsWindow(const QString& _windowTitle, QWidget *parent):
     setLayout(layout);
 
     connect(mEditor, SIGNAL(textChanged()), this, SLOT(textChanged()));
+
+    setObjectName("SCsWindow");
 }
 
 SCsWindow::~SCsWindow()
@@ -99,6 +101,7 @@ bool SCsWindow::loadFromFile(const QString &fileName)
 
     QTextStream in(&fileIn);
     mEditor->document()->setPlainText(in.readAll());
+    mEditor->setDocumentPath(fileName);
     fileIn.close();
 
     mFileName = fileName;

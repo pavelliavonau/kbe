@@ -25,6 +25,10 @@ along with OSTIS.  If not, see <http://www.gnu.org/licenses/>.
 #include "scgbus.h"
 #include "scgcontour.h"
 
+#ifdef _MSC_VER
+    #define _USE_MATH_DEFINES
+#endif
+
 #include <math.h>
 
 #define LINE_THIN_WIDTH 2.f

@@ -73,6 +73,7 @@ MainWindow::MainWindow(QWidget *parent) :
     /* creating tab widget */
     mTabWidget = new ExtendedTabWidget();
     connect(mTabWidget, SIGNAL(tabsUpdate()), this, SLOT(updateMenu()));
+    connect(mTabWidget, SIGNAL(currentChanged(int)), this, SLOT(updateMenu()));
 
     setCentralWidget(mTabWidget);
 
@@ -86,10 +87,9 @@ MainWindow::MainWindow(QWidget *parent) :
     createToolBars();
 
     updateMenu();
-    updateSpcificViewMenu();
+    updateSpecificViewMenu();
     updateRecentFileActions();
-
-    setWindowTitle(tr("Knowledge Base source Editor - version %1").arg(VERSION_STR));
+    updateWindowTitle();
 
     new PluginManager();
     PluginManager::instance()->initialize(Config::pathPlugins.absolutePath());
@@ -192,7 +192,8 @@ void MainWindow::updateEvent(EditorInterface *editor, EditEvents event)
     case ContentLoaded:
     case ContentSaved:
         updateMenu();
-        updateSpcificViewMenu();
+        updateSpecificViewMenu();
+        updateWindowTitle();
         break;
     }
 }
@@ -237,7 +238,7 @@ void MainWindow::updateMenu()
     ui->actionClose_Others->setEnabled(mTabWidget->subWindowList().size() > 1);
 }
 
-void MainWindow::updateSpcificViewMenu()
+void MainWindow::updateSpecificViewMenu()
 {
     ui->menuView->menuAction()->setVisible(false);//setDisabled(true);
     ui->menuView->clear();
@@ -270,6 +271,19 @@ void MainWindow::updateRecentFileActions()
         recentFileActs[j]->setVisible(false);
 
     separatorAct->setVisible(numRecentFiles > 0);
+}
+
+void MainWindow::updateWindowTitle()
+{
+    QWidget *window = mTabWidget->currentWidget();
+
+    if (window != 0)
+    {
+        setWindowTitle(tr("%1 - KBE version %2").arg(mTabWidget->tabTextFor(window)).arg(VERSION_STR));
+    }else
+    {
+        setWindowTitle(tr("Knowledge Base source Editor - version %1").arg(VERSION_STR));
+    }
 }
 
 void MainWindow::openRecentFile()
@@ -547,24 +561,30 @@ void MainWindow::fileExit()
 void MainWindow::helpAbout()
 {
     QMessageBox::about(this, tr("About KBE"),
-                       QString("<table><tr valign=\"middle\"><td align=\"left\"><img src=\"%1\"></td>"
-                               "<td>%2 %3: %4 <br> <br> Site: "
-                               "<STYLE type=\"text/css\">"
-                               "a:link {text-decoration: none}"
-                               "</STYLE>"
-                               "<a href=\"http://www.ostis.net\">http://www.ostis.net</a>"
-                               "<br> <br>Copyright  OSTIS.net</td></tr><tr>"
-                               "<td></td><td>%5:<ul>"
-                               "<li>Denis Koronchik</li>"
-                               "<li>Gumbar Ilya (zooner)</li>"
-                               "<li>Harkunov Evgeny (filosov)</li>"
-                               "</ul>%6:<ul>"
-                               "<li>Nikita Grishko (Gr1N)</li>"
-                               "<li>Denis Klimenko</li>"
-                               "<li>Pavel Karpan (pioneer)</li>"
-                               "<li>Dmitry Kolb (skif-sarmat)</li>"
-                               "</ul>"
-                               "</td></tr></table>")
+                       tr("<table><tr valign=\"middle\"><td align=\"left\"><img src=\"%1\"></td>"
+                          "<td>%2 %3: %4 <br> <br> Site: "
+                          "<STYLE type=\"text/css\">"
+                          "a:link {text-decoration: none}"
+                          "</STYLE>"
+                          "<a href=\"http://www.ostis.net\">http://www.ostis.net</a>"
+                          "<br> <br>Copyright  OSTIS.net</td></tr><tr>"
+                          "<td></td><td>%5:<ul>"
+                          "<li>Denis Koronchik</li>"
+                          "<li>Gumbar Ilya (zooner)</li>"
+                          "<li>Harkunov Evgeny (filosov)</li>"
+                          "</ul>%6:<ul>"
+                          "<li>Witkowsky Dmitry (wagos)</li>"
+                          "<li>Aliaksei Palkanau (lifus)</li>"
+                          "<li>Nikita Grishko (Gr1N)</li>"
+                          "<li>Denis Klimenko</li>"
+                          "<li>Konstantin Savon (Konstantsin)</li>"
+                          "<li>Sergei Yakimchik (Gudini)</li>"
+                          "<li>Lapitsky Artem</li>"
+                          "<li>Eugen Zakharich</li>"
+                          "<li>Pavel Karpan (pioneer)</li>"
+                          "<li>Dmitry Kolb (skif-sarmat)</li>"
+                          "</ul>"
+                          "</td></tr></table>")
                        .arg(QString(":/media/icons/help-about-logo.png"))
                        .arg(tr("Knowledge Base source Editor "))
                        .arg(tr("version"))
@@ -581,10 +601,11 @@ void MainWindow::helpAboutQt()
 void MainWindow::feedback()
 {
     QMessageBox::about(this, tr("Feedback"),
-                       QString("%1 e-mail: <a href=\"mailto:kbe@ostis.net\">kbe@ostis.net</a>."
-                               "<br/>%2 <a href=\"%3\">%4</a>.")
-                       .arg(tr("Founded errors description, new ideas and features you can send to"))
-                       .arg(tr("Also you can find our contact information on our"))
+                       QString("%1 <a href=\"http://forum.ostis.net/viewtopic.php?f=7&t=3\">%2</a>."
+                               "<br/>%3 <a href=\"%4\">%5</a>.")
+                       .arg(tr("Founded errors and new ideas you can write in"))
+                       .arg(tr("forum"))
+                       .arg(tr("Also you can find our contact information on "))
                        .arg("http://www.ostis.net/feedback.html")
                        .arg(tr("site")));
 }
@@ -685,7 +706,8 @@ void MainWindow::subWindowHasChanged(int index)
         updateDockWidgets(true);
     }
 
-    updateSpcificViewMenu();
+    updateSpecificViewMenu();
+    updateWindowTitle();
 }
 
 void MainWindow::windowWillBeClosed(QWidget* w)
@@ -716,6 +738,9 @@ void MainWindow::windowWillBeClosed(QWidget* w)
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
+    QSettings settings;
+    settings.setValue(Config::settingsMainWindowGeometry, saveGeometry());
+
     // close all child windows
     QList<QWidget*> widgets = mWidget2EditorInterface.keys();
     QWidget *widget = 0;

@@ -37,11 +37,13 @@ SCgPair::SCgPair() :
     mPosType(SCgAlphabet::PosUnknown),
     mPermType(SCgAlphabet::PermUnknown),
     mIsAccessory(false),
-    mIsOrient(false)
+    mIsOrient(false),
+    mIsParentChangeInProcess(false)
 {
     mPoints.push_back(QPointF());
     mPoints.push_back(QPointF());
 
+    setFlag(QGraphicsItem::ItemIsMovable, true);
     setToolTip(QObject::tr("sc.g-pair"));
     mDefaultZValue = 1;
     setZValue(mDefaultZValue);
@@ -99,6 +101,8 @@ void SCgPair::updateShape()
     path_stroker.setWidth(SCgAlphabet::lineWidthForShape());
     mShape = path_stroker.createStroke(mShapeNormal);
 
+    mLineShape = mShape;
+
     // updating pair
     update();
 
@@ -114,7 +118,7 @@ void SCgPair::updateShape()
     }
 }
 
-void SCgPair::updatePosition()
+void SCgPair::positionChanged()
 {
     // this notifies the scene of the imminent change, so that it can update its item geometry index.
     if (!mBeginObject || !mEndObject)   return;
@@ -140,6 +144,7 @@ void SCgPair::updatePosition()
         setParentItem(mBeginObject->parentItem());
     else if (mEndObject->isSelected() && mEndObject->parentItem() != parentItem())
         setParentItem(mEndObject->parentItem());
+
     // update shape with new points.
     updateShape();
 }
@@ -151,6 +156,20 @@ void SCgPair::objectDelete(SCgObject *object)
 
     if (mEndObject == object)
         mEndObject = 0;
+}
+
+QVariant SCgPair::itemChange(GraphicsItemChange change, const QVariant &value)
+{
+    if (change == QGraphicsItem::ItemParentChange)
+        mIsParentChangeInProcess = true;
+
+    if (change == QGraphicsItem::ItemParentHasChanged)
+        mIsParentChangeInProcess = false;
+
+    if (change == QGraphicsItem::ItemPositionHasChanged && !mIsParentChangeInProcess)
+        positionChanged();
+
+    return SCgObject::itemChange(change, value);
 }
 
 QPointF SCgPair::cross(const QPointF &from, float dot) const
@@ -235,13 +254,13 @@ void SCgPair::setPoints(const PointFVector &points)
 
     if(mBeginObject)
     {
-        qreal dPos = mBeginObject->dotPos(mapToScene(points.at(0)));
+        qreal dPos = mBeginObject->dotPos(points.at(0));
         if(dPos != 0)
             mBeginDot = dPos;
     }
     if(mEndObject)
     {
-        qreal dPos = mEndObject->dotPos(mapToScene(points.at(points.size()-1)));
+        qreal dPos = mEndObject->dotPos(points.at(points.size()-1));
         if(dPos != 0)
             mEndDot = dPos;
     }
@@ -264,7 +283,7 @@ void SCgPair::changePointPosition(int pointIndex, const QPointF& newPos)
         updateShape();
     }
     else
-        updatePosition();
+        positionChanged();
 }
 
 SCgPointGraphicsItem* SCgPair::createPointItem(int pointIndex)
@@ -286,7 +305,8 @@ void SCgPair::setBeginObject(SCgObject *object)
     if (mBeginObject)
         mBeginObject->addConnectedObject(this);
 
-//    updatePosition();
+    positionChanged();
+
 }
 
 SCgObject* SCgPair::beginObject() const
@@ -304,7 +324,7 @@ void SCgPair::setEndObject(SCgObject *object)
     if (mEndObject)
         mEndObject->addConnectedObject(this);
 
-//    updatePosition();
+    positionChanged();
 }
 
 SCgObject* SCgPair::endObject() const
@@ -315,7 +335,7 @@ SCgObject* SCgPair::endObject() const
 void SCgPair::setBeginDot(float pos)
 {
     mBeginDot = pos;
-//    updatePosition();
+    positionChanged();
 }
 
 float SCgPair::beginDot() const
@@ -326,7 +346,7 @@ float SCgPair::beginDot() const
 void SCgPair::setEndDot(float pos)
 {
     mEndDot = pos;
-//    updatePosition();
+    positionChanged();
 }
 
 float SCgPair::endDot() const
@@ -364,7 +384,7 @@ void SCgPair::swap()
         createPointObjects();
     }
 
-    updatePosition();
+    positionChanged();
 }
 
 bool SCgPair::isAcceptable(SCgObject* obj, SCgPointObject::IncidentRole role) const

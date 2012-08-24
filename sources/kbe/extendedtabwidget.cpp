@@ -30,7 +30,7 @@ along with OSTIS.  If not, see <http://www.gnu.org/licenses/>.
 
 
 ExtendedTabWidget::ExtendedTabWidget(QWidget *parent) :
-        QTabWidget(parent)
+    QTabWidget(parent)
 {
     QTabBar* tb = new QTabBar(this);
     tb->setSelectionBehaviorOnRemove(QTabBar::SelectPreviousTab);
@@ -77,17 +77,14 @@ inline QString ExtendedTabWidget::tabTextFor(QWidget* subWindow)
         return QString();
 
     QString title = subWindow->windowTitle();
-    if (subWindow->isWindowModified())
-        title.replace("[*]","*");
-    else
-    {
-        int index = title.indexOf("[*]");
-        while (index != -1)
-        {
-            title.remove(index, 3);
-            index = title.indexOf("[*]");
-        }
-    }
+    title.replace('\\', '/');
+
+    int n = title.lastIndexOf('/');
+    if (n != -1)
+        title = title.mid(n + 1);
+
+//    if (subWindow->isWindowModified())
+//        title += " [*]";
 
     return title.isEmpty() ? tr("(Untitled)") : title;
 }

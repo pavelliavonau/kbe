@@ -95,7 +95,7 @@ void SCgContour::setPoints(const PointFVector &points)
     SCgPointObject::setPoints(points);
 }
 
-void SCgContour::updatePosition()
+void SCgContour::positionChanged()
 {
     updateShape();
 }
@@ -140,7 +140,9 @@ void SCgContour::updateShape()
     path_stroker.setWidth(SCgAlphabet::lineWidthForShape() + 2);
     mShape = path_stroker.createStroke(mShape);
 
-    //mShape = mShape.united(mShapePoints);
+    mLineShape = mShape;
+
+    mShape = mShapeNormal.united(mShape);
 
     updateConnected();
 
@@ -230,6 +232,6 @@ void SCgContour::changePointPosition(int pointIndex, const QPointF& newPos)
 {
     SCgPointObject::changePointPosition(pointIndex, newPos);
 
-    updatePosition();
+    positionChanged();
 }
 

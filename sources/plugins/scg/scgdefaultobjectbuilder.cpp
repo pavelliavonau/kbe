@@ -92,8 +92,7 @@ void DefaultSCgObjectBuilder::buildObjects(const AbstractSCgObjectBuilder::TypeT
         SCgObject *endObject = mId2SCgObj[pairInfo->endObjectId()];
 
         pair->setBeginObject(begObject);
-        pair->setEndObject(endObject);
-        pair->updatePosition();
+        pair->setEndObject(endObject);       
     }
     // In this case we must check if all begin and end objects are valid.
     // If they not, we have to delete all unfinished pairs.
@@ -217,7 +216,7 @@ void DefaultSCgObjectBuilder::buildContour(SCgContourInfo* info)
             SCgContour* contour = new SCgContour;
 
             contour->setPos(QPolygonF(info->points()).boundingRect().center());
-            contour->setPoints(contour->mapFromScene(info->points()));
+            contour->setPoints(info->points());
 
             setObjectInfo(contour, info);
         }

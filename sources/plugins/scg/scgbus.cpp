@@ -80,7 +80,7 @@ QVariant SCgBus::itemChange(GraphicsItemChange change, const QVariant &value)
     return SCgObject::itemChange(change, value);
 }
 
-void SCgBus::updatePosition()
+void SCgBus::positionChanged()
 {
     // skip update if there are no points
     if (mPoints.empty())    return;
@@ -109,6 +109,8 @@ void SCgBus::updateShape()
     path_stroker.setJoinStyle(Qt::MiterJoin);
     path_stroker.setWidth(SCgAlphabet::lineWidthForShape());
     mShape = path_stroker.createStroke(mShape);
+
+    mLineShape = mShape;
 
     // update item
     update();
@@ -153,21 +155,7 @@ QPointF SCgBus::cross(const QPointF &from, float dot) const
     if (s >= mPoints.size() - 1)    s = mPoints.size() - 2;
     if (s < 0)  s = 0;
 
-    QPointF p = mPoints[s] + (mPoints[s+1] - mPoints[s]) * ds;
-
-    QVector2D vec(from - p);
-
-    /* distanse from bus to pair */
-    const qreal distance = 7.f;
-
-    qreal l = vec.length();
-    /* if not preview .....*/
-    if (l > 5.f)
-    {
-    /* .... then make distance. */
-        p += vec.normalized().toPointF() * distance;
-    }
-    return mapToScene(p);
+    return mapToScene(mPoints[s] + (mPoints[s+1] - mPoints[s]) * ds);
 }
 
 float SCgBus::dotPos(const QPointF &point) const
@@ -257,7 +245,7 @@ void SCgBus::setOwner(SCgNode *owner)
     }
     mOwner = owner;
     if (mOwner) mOwner->setBus(this);
-    updatePosition();
+    positionChanged();
 }
 
 SCgNode* SCgBus::owner() const
@@ -272,5 +260,5 @@ void SCgBus::changePointPosition(int pointIndex, const QPointF& newPos)
     if(!pointIndex)
         updateShape();
         else
-            updatePosition();
+            positionChanged();
 }

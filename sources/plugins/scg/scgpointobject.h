@@ -45,8 +45,8 @@ public:
     typedef QVector<QPointF> PointFVector;
 
     /*! Set points for an object.
-      @param points reference to vector that contains points for an object.
-      NOTE:all points in THIS ITEM coordinates
+      @param points Vector of points.
+      @note All points must be mapped into scene coordinates
       @see SCgObject::points
       @see SCgObject::scenePoints
       */
@@ -89,6 +89,12 @@ public:
         return mShapeNormal;
     }
 
+    //! Return line shape, used to work with points
+    QPainterPath lineShape() const
+    {
+        return mLineShape;
+    }
+
     /*! Returns true, if @p obj is acceptable for specified role.
      * e.g. this object can be begin or end object of pair, or owner for bus.
      * @see SCgPaur::isAcceptable; @see SCgBus::isAcceptable.
@@ -125,6 +131,8 @@ protected:
     qreal mDefaultZValue;
     //! Path that represents shape without any stroke (used for drawing)
     QPainterPath mShapeNormal;
+    //! Line shape used to process contains function to line
+    QPainterPath mLineShape;
 
 private:
     static qreal distanceToSubpath(const QPointF& p0, const QPointF& p1, const QPointF& p);
